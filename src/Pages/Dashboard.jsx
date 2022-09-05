@@ -17,10 +17,11 @@ import Link from '@mui/material/Link';
 import MenuIcon from '@mui/icons-material/Menu';
 import ChevronLeftIcon from '@mui/icons-material/ChevronLeft';
 import NotificationsIcon from '@mui/icons-material/Notifications';
-import { mainListItems, secondaryListItems } from '../Components/listItems';
-import Chart from '../Components/Chart';
-import Deposits from '../Components/Deposits';
-import Orders from '../Components/Orders';
+import { mainListItems } from '../Components/listItems';
+import TextField from '@mui/material/TextField';
+import Button from '@mui/material/Button';
+import axios from 'axios'
+import { DataGrid, GridToolbar } from '@mui/x-data-grid';
 
 function Copyright(props) {
   return (
@@ -83,10 +84,60 @@ const Drawer = styled(MuiDrawer, { shouldForwardProp: (prop) => prop !== 'open' 
 
 const mdTheme = createTheme();
 
+const columns = [
+  { field: 'id', headerName: 'ID', width: 90 },
+  {
+    field: 'accuracy',
+    headerName: 'accuracy',
+    width: 150,
+  },
+  {
+    field: 'type',
+    headerName: 'Type',
+    width: 150,
+  },
+  {
+    field: 'comment',
+    headerName: "Doctor's comment",
+    width: 200,
+  },
+];
+
+const rows = [
+  { id: 1, accuracy: 95.0, type: 2, comment: 'not yet available' }
+];
+
 function DashboardContent() {
   const [open, setOpen] = React.useState(true);
+  const [show, setShow] = React.useState(false);
+  const [prediction, setPrediction] = React.useState(0)
+  const [comment, setComment] = React.useState("")
+  const [type, setType] = React.useState(0)
   const toggleDrawer = () => {
     setOpen(!open);
+  };
+
+  const handleSubmit = (event) => {
+    event.preventDefault();
+    const data = new FormData(event.currentTarget);
+    let formData = {
+      "clump_thickness": data.get('clump'),
+      "unif_cell_size": data.get('cell_size'),
+      "unif_cell_shape": data.get('cell_shape'),
+      "marg_adhesion": data.get('adh'),
+      "single_epith_cell_size": data.get('epith'),
+      "bare_nuclei": data.get('nucl'),
+      "bland_chrom": data.get('chrom'),
+      "norm_nucleoli": data.get('norm'),
+      "mistoses": data.get('mist')
+    };
+
+    axios.post("http://127.0.0.1:8000/app/predict/", formData).then(res => {
+      setPrediction(res.data['accuracy'])
+      setComment(res.data['message'])
+      setType(res.data['prediction'])
+      setShow(true)
+    })
   };
 
   return (
@@ -144,7 +195,7 @@ function DashboardContent() {
           <List component="nav">
             {mainListItems}
             <Divider sx={{ my: 1 }} />
-            {secondaryListItems}
+            {/* {secondaryListItems} */}
           </List>
         </Drawer>
         <Box
@@ -169,29 +220,101 @@ function DashboardContent() {
                     p: 2,
                     display: 'flex',
                     flexDirection: 'column',
-                    height: 240,
+                    height: 400,
                   }}
                 >
-                  <Chart />
+                  <h2>Predict</h2>
+                  <Box
+                    component="form"
+                    sx={{
+                      '& > :not(style)': { m: 1, width: '25ch' },
+                    }}
+                    noValidate
+                    autoComplete="off"
+                    onSubmit={handleSubmit}
+                  >
+                    <TextField id="outlined-basic" label="Clump Thickness" name='clump' variant="outlined" />
+                    <TextField id="outlined-basic" label="Unif Cell Size" name='cell_size' variant="outlined" />
+                    <TextField id="outlined-basic" label="Unif Cell Shape" name='cell_shape' variant="outlined" />
+                    <TextField id="outlined-basic" label="Marg Adhesion" name='adh' variant="outlined" />
+                    <TextField id="outlined-basic" label="Single Epith Cell Size" name='epith' variant="outlined" />
+                    <TextField id="outlined-basic" label="Bare Nuclei" name='nucl' variant="outlined" />
+                    <TextField id="outlined-basic" label="Bland Chrom" name='chrom' variant="outlined" />
+                    <TextField id="outlined-basic" label="Norm Nucleoli" name='norm' variant="outlined" />
+                    <TextField id="outlined-basic" label="Mistoses" name='mist' variant="outlined" />
+                    <Button
+                      type="submit"
+                      fullWidth
+                      variant="contained"
+                      sx={{ mt: 3, mb: 2 }}
+                    >
+                      Predict
+                    </Button>
+                  </Box>
+
+                  {/* <Chart /> */}
                 </Paper>
+                {/* Recent Deposits */}
+
+                {/* Recent Orders */}
               </Grid>
-              {/* Recent Deposits */}
-              <Grid item xs={12} md={4} lg={3}>
-                <Paper
-                  sx={{
-                    p: 2,
-                    display: 'flex',
-                    flexDirection: 'column',
-                    height: 240,
-                  }}
-                >
-                  <Deposits />
-                </Paper>
-              </Grid>
-              {/* Recent Orders */}
+
+              {
+                show ? <Grid item xs={12} md={4} lg={3}>
+
+                  {type == 2 ? <Paper
+                    sx={{
+                      p: 2,
+                      display: 'flex',
+                      flexDirection: 'column',
+                      height: 240,
+                      backgroundColor: 'lightgreen'
+                    }}
+                  >
+                    <h2>{comment}</h2>
+                    <h3>The Accuracy Rate is: %{prediction}</h3>
+                  </Paper> : <Paper
+                    sx={{
+                      p: 2,
+                      display: 'flex',
+                      flexDirection: 'column',
+                      height: 240,
+                      backgroundColor: 'red'
+                    }}
+                  >
+                    <h2>Unfortunately, It's Malignant !</h2>
+                    <h3>The Accuracy Rate is: %{prediction}</h3>
+                  </Paper>}
+
+                </Grid> : <Grid item xs={12} md={4} lg={3}>
+                  <Paper
+                    sx={{
+                      p: 2,
+                      display: 'flex',
+                      flexDirection: 'column',
+                      height: 240,
+                    }}
+                  >
+                  </Paper>
+                </Grid>
+              }
+
+
+
               <Grid item xs={12}>
                 <Paper sx={{ p: 2, display: 'flex', flexDirection: 'column' }}>
-                  <Orders />
+                  <Box sx={{ height: 400, width: '100%' }}>
+                    <DataGrid
+                      rows={rows}
+                      columns={columns}
+                      pageSize={5}
+                      rowsPerPageOptions={[5]}
+                      checkboxSelection
+                      disableSelectionOnClick
+                      experimentalFeatures={{ newEditingApi: true }}
+                      components={{ Toolbar: GridToolbar }}
+                    />
+                  </Box>
                 </Paper>
               </Grid>
             </Grid>

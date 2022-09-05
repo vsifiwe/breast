@@ -14,6 +14,7 @@ import Container from '@mui/material/Container';
 import { createTheme, ThemeProvider } from '@mui/material/styles';
 import { useFlutterwave, closePaymentModal } from 'flutterwave-react-v3';
 import axios from 'axios';
+import { useNavigate } from "react-router-dom";
 
 function Copyright(props) {
     return (
@@ -31,7 +32,7 @@ function Copyright(props) {
 const theme = createTheme();
 
 export default function Register() {
-
+    let navigate = useNavigate();
     const config = {
         public_key: 'FLWPUBK_TEST-43c5c0e6828d1d0452e44df1cb470658-X',
         tx_ref: Date.now(),
@@ -58,19 +59,23 @@ export default function Register() {
         let userData = {
             email: data.get('email'),
             password: data.get('password'),
-            username: "",
-            status: false
         };
 
-        axios.post("https://630a00e7f8a20183f779f6dd.mockapi.io/users", userData).then(() => {
-            handleFlutterPayment({
-              callback: (response) => {
-                  console.log(response);
-                  closePaymentModal() // this will close the modal programmatically
-                  window.location.href = "http://127.0.0.1:8000/breast/#/"
-              },
-              onClose: () => {},
-            });
+        axios.post("http://127.0.0.1:8000/app/register/", userData).then(res => {
+            if(res.data == 'register'){
+                handleFlutterPayment({
+                    callback: (response) => {
+                        console.log(response);
+                        closePaymentModal() // this will close the modal programmatically
+                        navigate("../dashboard", { replace: true });
+                    },
+                    onClose: () => {},
+                  });
+            }
+            else {
+                alert(res.data)
+            }
+            
           })
     };
 
@@ -90,7 +95,7 @@ export default function Register() {
                         <LockOutlinedIcon />
                     </Avatar>
                     <Typography component="h1" variant="h5">
-                        Sign in
+                        Register
                     </Typography>
                     <Box component="form" onSubmit={handleSubmit} noValidate sx={{ mt: 1 }}>
                         <TextField

@@ -12,7 +12,8 @@ import LockOutlinedIcon from '@mui/icons-material/LockOutlined';
 import Typography from '@mui/material/Typography';
 import Container from '@mui/material/Container';
 import { createTheme, ThemeProvider } from '@mui/material/styles';
-import PaymentButton from '../Components/PaymentButton';
+import axios from 'axios'
+import { useNavigate } from "react-router-dom";
 
 function Copyright(props) {
   return (
@@ -30,13 +31,25 @@ function Copyright(props) {
 const theme = createTheme();
 
 export default function Login() {
+  let navigate = useNavigate();
   const handleSubmit = (event) => {
     event.preventDefault();
     const data = new FormData(event.currentTarget);
-    console.log({
+
+    let userData = {
       email: data.get('email'),
       password: data.get('password'),
-    });
+  };
+
+  axios.post("http://127.0.0.1:8000/app/login/", userData).then(res => {
+      if(res.data == 'login'){
+        navigate("../dashboard", { replace: true });
+      }
+      else {
+          alert(res.data)
+      }
+      
+    })
   };
 
   return (
@@ -90,7 +103,7 @@ export default function Login() {
             >
               Sign In
             </Button>
-            <PaymentButton />
+            {/* <PaymentButton /> */}
             <Grid container>
               <Grid item xs>
                 <Link href="#" variant="body2">
