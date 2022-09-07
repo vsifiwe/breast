@@ -41,9 +41,9 @@ export default function Login() {
       password: data.get('password'),
   };
 
-  axios.post("http://127.0.0.1:8000/app/login/", userData).then(res => {
+  axios.post("http://127.0.0.1:8000/app/dlogin/", userData).then(res => {
       if(res.data == 'login'){
-        navigate("../dashboard", { state: {email: userData.email} , replace: true });
+        navigate("../doctor", { state: {email: userData.email} , replace: true });
       }
       else {
           alert(res.data)

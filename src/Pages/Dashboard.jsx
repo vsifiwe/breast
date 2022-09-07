@@ -1,4 +1,5 @@
 import * as React from 'react';
+import { useEffect } from 'react';
 import { styled, createTheme, ThemeProvider } from '@mui/material/styles';
 import CssBaseline from '@mui/material/CssBaseline';
 import MuiDrawer from '@mui/material/Drawer';
@@ -22,6 +23,8 @@ import TextField from '@mui/material/TextField';
 import Button from '@mui/material/Button';
 import axios from 'axios'
 import { DataGrid, GridToolbar } from '@mui/x-data-grid';
+import { useLocation, useNavigate } from 'react-router-dom';
+import ExitToAppIcon from '@mui/icons-material/ExitToApp';
 
 function Copyright(props) {
   return (
@@ -92,7 +95,7 @@ const columns = [
     width: 150,
   },
   {
-    field: 'type',
+    field: 'prediction',
     headerName: 'Type',
     width: 150,
   },
@@ -103,19 +106,26 @@ const columns = [
   },
 ];
 
-const rows = [
-  { id: 1, accuracy: 95.0, type: 2, comment: 'not yet available' }
-];
-
 function DashboardContent() {
   const [open, setOpen] = React.useState(true);
   const [show, setShow] = React.useState(false);
   const [prediction, setPrediction] = React.useState(0)
   const [comment, setComment] = React.useState("")
   const [type, setType] = React.useState(0)
+  const [predictions, setPredictions] = React.useState([])
   const toggleDrawer = () => {
     setOpen(!open);
   };
+
+  let location = useLocation()
+  let navigate = useNavigate()
+
+  useEffect(() => {
+    console.log(location)
+    axios.post("http://127.0.0.1:8000/app/user/", { "email": location.state.email })
+      .then(res => setPredictions(res.data.data))
+  }, [])
+
 
   const handleSubmit = (event) => {
     event.preventDefault();
@@ -129,7 +139,8 @@ function DashboardContent() {
       "bare_nuclei": data.get('nucl'),
       "bland_chrom": data.get('chrom'),
       "norm_nucleoli": data.get('norm'),
-      "mistoses": data.get('mist')
+      "mistoses": data.get('mist'),
+      "email": location.state.email
     };
 
     axios.post("http://127.0.0.1:8000/app/predict/", formData).then(res => {
@@ -137,6 +148,9 @@ function DashboardContent() {
       setComment(res.data['message'])
       setType(res.data['prediction'])
       setShow(true)
+    }).then(() => {
+      axios.post("http://127.0.0.1:8000/app/user/", { "email": location.state.email })
+        .then(res => setPredictions(res.data.data))
     })
   };
 
@@ -171,10 +185,8 @@ function DashboardContent() {
             >
               Dashboard
             </Typography>
-            <IconButton color="inherit">
-              <Badge badgeContent={4} color="secondary">
-                <NotificationsIcon />
-              </Badge>
+            <IconButton color="inherit" onClick={() => navigate('../', { replace: true })}>
+              <ExitToAppIcon onC />
             </IconButton>
           </Toolbar>
         </AppBar>
@@ -305,7 +317,7 @@ function DashboardContent() {
                 <Paper sx={{ p: 2, display: 'flex', flexDirection: 'column' }}>
                   <Box sx={{ height: 400, width: '100%' }}>
                     <DataGrid
-                      rows={rows}
+                      rows={predictions}
                       columns={columns}
                       pageSize={5}
                       rowsPerPageOptions={[5]}
